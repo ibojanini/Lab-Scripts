@@ -1,0 +1,53 @@
+#This script is useful to find genes in genomes that have not been published and aren't available in databases such as NCBI.
+
+##PARTE 1
+with open ('Xylella_fastidiosa_temecula1.ASM724v1.36.gff3','r') as blastfile:
+    genelist=['nadE']  
+    genedict={}
+    for line in blastfile:
+        nodesplit=line.split() 
+        for item in genelist:
+            if item in line:
+                genedict[item]=[nodesplit[0],nodesplit[6], nodesplit[3], nodesplit[4]]
+                
+nodegenedict = {}
+for key in genedict: 
+    nodegenedict[genedict[key][0]]=key 
+
+    with open ('Xylella_fastidiosa_temecula1.ASM724v1.dna.chromosome.Chromosome.fa','r') as fastafile:
+        sequencestring = '' 
+        currentkey=None
+        previouskey=None
+        for ticker, line in enumerate(fastafile):
+            if '>' in line:
+                if currentkey:
+                    previouskey = currentkey
+                    genedict[currentkey].append(sequencestring)
+                switch = False
+                linenode = line.split()[0][1:]
+                if linenode in nodegenedict: 
+                    switch = True
+                    currentkey = nodegenedict[linenode]
+            if switch:
+                if '>' not in line:
+                    strippedline=line.strip()
+                    sequencestring+= strippedline
+            else: 
+                sequencestring = ''
+                currentkey = None
+        if not previouskey and sequencestring:
+            genedict[currentkey].append(sequencestring)
+
+constructdict = {}
+constructdict1= {}
+
+
+reversecomplement=''
+for nodesequence,key in genedict.items():
+    endpos =   int(key[3])
+    startpos = int(key[2])
+    
+    if startpos > 0 and endpos > 0:
+        construct=key[4][startpos:endpos] 
+    constructdict[nodesequence]=[construct, key[1]]
+print(constructdict)
