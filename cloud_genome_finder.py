@@ -3,7 +3,7 @@ import os #operative system
 
 SE_gene_list=open("SE_gene_list.txt","w")
 with open ('text_SE_gene_presence_absence.txt','r') as SE_file:
-    # parse file =ir de linea en linea
+    
     line_list = []
     newdictionary= {}
     numberofisolates={}
@@ -11,21 +11,21 @@ with open ('text_SE_gene_presence_absence.txt','r') as SE_file:
     for ticker, line in enumerate(SE_file):
         if ticker>0:
             line= line.strip('\n')
-            line = line.split('\t') #to separate where there are TABS
-            listofgenes=line[14:]
+            line = line.split('\t') 
+            listofgenes=line[14:] #may need to change this parameter based on how the file is formatted 
             numberofisolates[line[0]]=int(line[3])
             dictofgenes[line[0]]=listofgenes
 
             
     for gene,number in numberofisolates.items():
-        if number <=6:
+        if number <=6: #may need to change this based on how many organisms are in the population that's being studied
             newdictionary[gene]=number   
     genelist=[]
     #print(genelist)    
     for number,isolates in dictofgenes.items():
         for genename in isolates:
             #print(genename)
-            if genename: #por cada item en la lista, : es si el item existe
+            if genename: 
                 genelist.append(genename)
                 break
 
@@ -52,11 +52,11 @@ fasta_filepaths  = [os.path.join(fasta_path, name2) for name2 in os.listdir(fast
 for path2 in fasta_filepaths:
     with open(path2, 'r') as f2:
         file2 = f2.readlines()
-        print(path2)
+        #print(path2)
         
 nodegenedict = {}
 for genename in genedict:
-    nodegenedict[genedict[genename][0]]=genename #we are defining what nodegenedict is.
+    nodegenedict[genedict[genename][0]]=genename 
     for path2 in fasta_filepaths:
         
         with open (path2,'r') as f2:
@@ -88,7 +88,6 @@ for genename in genedict:
             if not previouskey and sequencestring:
                 genedict[currentkey].append(sequencestring)
                     
-##PARTE 3
 constructdict = {}
 
 reversecomplement=''
