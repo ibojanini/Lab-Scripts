@@ -1,0 +1,253 @@
+#PART 1
+with open ('Xylella_fastidiosa_temecula1.ASM724v1.36.gff3','r') as napafile:
+    genelist=['gumD'] #'Napa1_CA_08680']#'Napa1_CA_00280']#'Napa1_CA_01320']#]#'Napa1_CA_01320']#'Napa1_CA_00280']#'Napa1_CA_16740']#'Napa1_CA_22690']#'Napa1_CA_08680'] #'Napa1_CA_06570'] ##'Napa1_CA_05660'] #'Napa1_CA_04150'] ]#'Napa1_CA_16740']#'Napa1_CA_11710']#]#]# #Napa1_CA_01320']#] #,'Napa1_CA_11710', ,'Napa1_CA_22690', 'Napa1_CA_08680', 'Napa1_CA_06570', ,'Napa1_CA_01320', 'Napa1_CA_11630', 'Napa1_CA_0811', 'Napa1_CA_16740'] #'Napa1_CA_22710', 'Napa1_CA_13170', 'Napa1_CA_22840'] 
+    geneinfo={}
+    for line in napafile:
+        nodesplit=line.split()
+        for item in genelist:
+            if item in line:
+                geneinfo[item]=[nodesplit[0],nodesplit[6], nodesplit[3], nodesplit[4]]
+                #print(genedict)
+print(geneinfo)
+
+#PART 2
+wholenode={}
+nodegenedictionary = {}
+for key in geneinfo: 
+    #print(key)
+    nodegenedictionary[geneinfo[key][0]]=key 
+    with open ('Xylella_fastidiosa_temecula1.ASM724v1.dna.chromosome.Chromosome.fa','r') as fastafile:
+        sequencestring = ''
+        currentkey=None
+        previouskey=None
+        for ticker, line in enumerate(fastafile):
+            if '>' in line:
+                if currentkey:
+                    previouskey = currentkey
+                    wholenode=geneinfo
+                    geneinfo[currentkey].append(sequencestring)
+                switch = False
+                linenode = line.split()[0][1:]
+                if linenode in nodegenedictionary:
+                    switch = True
+                    currentkey = nodegenedictionary[linenode]
+            if switch:
+                if '>' not in line:
+                    strippedline=line.strip()
+                    sequencestring+= strippedline
+            else: 
+                sequencestring = ''
+                currentkey = None
+        if not previouskey and sequencestring:
+            geneinfo[currentkey].append(sequencestring)
+            
+#PARTE 3
+#End product is constructdictionary, which contains {'gene': upstream, downstream, '+/-'} If - then is already fixed to read on the forward direction
+
+constructdictionary= {}
+
+reversecomplement=''
+for nodesequence, key in geneinfo.items():
+#     print(nodesequence)
+#     print(key)
+    endpos =   int(key[3])
+    startpos = int(key[2])
+    
+    sumastartpos =   startpos+50
+    restastartpos = startpos-450
+    sumaendpos =      endpos+450
+    restaendpos =      endpos-50       
+
+    if restastartpos > 0 and sumastartpos > 0:
+        upstreamconstruct=key[4][restastartpos:sumastartpos] 
+        upstreamconstruct=upstreamconstruct.upper()    
+    else:
+        continue
+        
+        
+    if sumaendpos > 0 and restaendpos > 0:#####
+        downstreamconstruct=key[4][restaendpos:sumaendpos]
+        downstreamconstruct=downstreamconstruct.upper()
+
+    else:
+        continue
+        
+    upstream = ''
+    downstream = '' 
+    if key[1] == '-':        
+        reversedictionary={'A':'T','C':'G','T':'A','G':'C'}         
+        for base in upstreamconstruct:
+            upstream += reversedictionary[base]
+            reversecomplement=upstream[::-1]
+        for base in downstreamconstruct:
+            downstream += reversedictionary[base]
+            reversecomplement2=downstream[::-1]
+            constructdictionary[nodesequence]=[reversecomplement, reversecomplement2, key[1]]
+    else:
+         constructdictionary[nodesequence]=[upstreamconstruct, downstreamconstruct, key[1]] 
+            
+print(constructdictionary)
+
+#PART 4
+
+nokandownstreamwindow={}
+kanupstreamwindow={}
+nokanupstreamwindow={}
+kandownstreamwindow={} 
+
+cassetegenedictionary= {}
+KanR_F = 'GAGATTTTGAGACACAACGTGGCTT' #1924 dn_f underlined sequence
+KanR_R= 'GCAACACCTTCTTCACGAGGCAGAC'#1924 up_r underlined sequence
+
+#For Kan Constructs:
+
+for nameofgene,constructs in constructdictionary.items(): 
+    if len(constructs[0])>20: 
+        kanupstreamwindow[nameofgene]=KanR_R+constructs[0]    
+    if len(constructs[1])>20:
+        kandownstreamwindow[nameofgene]=KanR_F+constructs[1]
+print('kandownstreamwindow', kandownstreamwindow)
+print('kanupstreamwindow', kanupstreamwindow)
+
+for nameofgene,constructs in constructdictionary.items():
+    if len(constructs[0])>20:  
+        nokanupstreamwindow[nameofgene]=constructs[0]  
+    if len(constructs[1])>20:
+        nokandownstreamwindow[nameofgene]=constructs[1]
+print(nokanupstreamwindow)
+
+#PART 5:
+windowpergene={}
+final_upstreamwindows={}
+final_down_upstreamwindows={}
+final_up_upstreamwindows={}
+nokan_down_upstreamwindows={}
+
+gptr = open("kan_dn_f.txt", "w")
+iptr=open("dn_r.txt","w")
+kptr=open("dn_f", "w") 
+
+upstreamdict={}
+upstreamwindow={}
+for nameofgene,kanupstreamconstruct in kanupstreamwindow.items():
+    if len(kanupstreamconstruct)>20:
+        window1=[]
+            
+        for i in range(len(kanupstreamconstruct)-24): #19
+            window1.append(kanupstreamconstruct[i:i+25])
+    final_down_upstreamwindows[nameofgene]=window1[499:524] 
+    kanupstreamwindow[nameofgene]=window1
+
+upstreamdict={}
+for nameofgene,nokanupstreamconstruct in nokanupstreamwindow.items():         
+    if len(nokanupstreamconstruct)>20:
+        window2=[]
+            
+        for i in range(len(nokanupstreamconstruct)-24): #19
+            window2.append(nokanupstreamconstruct[i:i+25])
+    
+    final_up_upstreamwindows[nameofgene]=window2[0:10] #0:10
+    nokan_down_upstreamwindows[nameofgene]=window2[489:499] #466:476
+    nokanupstreamwindow[nameofgene]=window2  
+    
+fptr = open("kan_up_r.txt", "w")
+
+for q,u in final_down_upstreamwindows.items():
+    listavaciaderc=[]
+    reversedict={'A':'T','C':'G','T':'A','G':'C'}         
+    for w in u:
+        reversed_final_down_upstreamwindows= ''
+        for tr in w:
+            reversed_final_down_upstreamwindows += reversedict[tr]
+            reversecompletement=reversed_final_down_upstreamwindows[::-1]
+
+        listavaciaderc.append(reversecompletement)
+        final_down_upstreamwindows[q]=listavaciaderc
+        
+    fptr.write(str(q) + ' ')
+    fptr.write(str(listavaciaderc) + '\n')
+fptr.close() 
+
+jptr=open("up_r", "w")
+for p,t in nokan_down_upstreamwindows.items():
+    listavaciaderc2=[]
+    reversedict2={'A':'T','C':'G','T':'A','G':'C'}         
+    for w2 in t:
+        reversed_nokan_down_upstreamwindows= ''
+        for tr2 in w2:
+            reversed_nokan_down_upstreamwindows += reversedict2[tr2]
+            reversecompletement2=reversed_nokan_down_upstreamwindows[::-1]
+
+        listavaciaderc2.append(reversecompletement2)
+        nokan_down_upstreamwindows[p]=listavaciaderc2
+        
+    jptr.write(str(p) + ' ')
+    jptr.write(str(listavaciaderc2) + '\n')
+jptr.close() 
+
+hptr=open("up_f.txt","w")
+for h,i in final_up_upstreamwindows.items():
+    #print(h)
+    hptr.write(str(h)+ ' ')
+    hptr.write(str(i)+ '\n')
+hptr.close()
+
+windowpergene={}
+final_downstreamwindows={}
+final_up_downstreamwindows={}
+final_down_downstreamwindows={}
+nokan_up_downstreamwindows={}
+downstreamwindow={}
+
+
+
+for nameofgene,kanupstreamconstruct in kanupstreamwindow.items():
+    if len(kanupstreamconstruct)>20:
+        window1=[]
+            
+        for i in range(len(kanupstreamconstruct)-24): #19
+            window1.append(kanupstreamconstruct[i:i+25])
+    
+    final_down_upstreamwindows[nameofgene]=window1[499:524] 
+    kanupstreamwindow[nameofgene]=window1
+
+for nameofgene,kandownstreamconstruct in kandownstreamwindow.items():          
+    if len(kandownstreamconstruct)>20:
+        window4=[]
+        for j in range(len(kandownstreamconstruct)-24): #19
+            window4.append(kandownstreamconstruct[j:j+25])
+    
+    final_up_downstreamwindows[nameofgene]=window4[0:10]
+    final_down_downstreamwindows[nameofgene]=window4[480:510] 
+    nokan_up_downstreamwindows[nameofgene]=window4[25:35]
+
+    downstreamwindow[nameofgene]=window4
+
+for j,k in final_up_downstreamwindows.items():
+    gptr.write(str(j)+ ' ')
+    gptr.write(str(k)+ '\n')
+gptr.close()
+
+for x,y in final_down_downstreamwindows.items():
+    listavaciaderc1=[]
+    reversedict1={'A':'T','C':'G','T':'A','G':'C'}         
+    for w1 in y:
+        reversed_final_down_downstreamwindows1= ''
+        for tr1 in w1:
+            reversed_final_down_downstreamwindows1 += reversedict1[tr1]
+            reversecompletement1=reversed_final_down_downstreamwindows1[::-1]
+
+        listavaciaderc1.append(reversecompletement1)
+        final_down_downstreamwindows[x]=listavaciaderc1
+        
+    iptr.write(str(x)+ ' ')
+    iptr.write(str(listavaciaderc1)+ '\n')
+iptr.close()
+
+
+for m,n in nokan_up_downstreamwindows.items():
+    kptr.write(str(m)+ ' ')
+    print(n)
+    kptr.write(str(n)+ '\n')
+kptr.close()
+
