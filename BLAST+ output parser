@@ -1,37 +1,35 @@
 import os #operative system
-from os.path import basename#fileName
+from os.path import basename
 import pandas as pd 
 
-output_path = r"/Users/isabelbojanini/Desktop/Output" # make sure to put the 'r' in front
-output_filepaths  = [os.path.join(output_path, name) for name in os.listdir(output_path)]
+output_path = r"/Users/isabelbojanini/Desktop/Output" 
+output_filepaths  = [os.path.join(output_path, name) for name in os.listdir(output_path)] #path to all output files
 
 final_dictionary= {}
 for path in output_filepaths:
-    if not basename(path).startswith('.'):#ignore hidden files
+    if not basename(path).startswith('.'): #to ignore hidden files
         relevant_dictionary = {}
         with open(path, 'r') as f:
             for line in f:
-                #print(line)
                 line1= line.strip('\n')
-                line1= line.split('\t')#to separate where there are TABS
-                querygenes=line1[0]
-                subjectmatch=line1[1]
+                line1= line.split('\t')
+                query_genes=line1[0]
                 seq_identity=line1[2]
                 seqid = float(seq_identity)
                 query_coverage=line1[12]
                 qcovs=float(query_coverage)
-                #print(querygenes)
+
                 if seqid>=70 and qcovs >=70:
                     statement="MATCH"
                 else:
                     statement="NO MATCH"
-
-                if querygenes not in relevant_dictionary: #llenando el diccionario si qg no esta en dict, llenarlo de la siguiente manera
-                    relevant_dictionary[querygenes]=statement
+                
+                if query_genes not in relevant_dictionary: #This segment is to avoid having duplicate genes in a given dictionary
+                    relevant_dictionary[query_genes]=statement
                 else:
-                    if relevant_dictionary[querygenes]=="NO MATCH": #si qg esta en el 
+                    if relevant_dictionary[query_genes]=="NO MATCH":
                         if statement=="MATCH":
-                            relevant_dictionary[querygenes]=statement #override only if "NO MATCH"
-        final_dictionary.update({path:relevant_dictionary})
+                            relevant_dictionary[query_genes]=statement 
+        final_dictionary.update({path:relevant_dictionary}) #This is a nested dictionary of all isolates (and their genes)
 df = pd.DataFrame(final_dictionary)
 df.to_csv('Blast_output_matrix.csv')
